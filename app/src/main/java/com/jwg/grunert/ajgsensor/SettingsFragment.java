@@ -25,6 +25,8 @@ public class SettingsFragment extends Fragment {
             public boolean onTouch(View v, MotionEvent event) {
                 if (event.getAction() == MotionEvent.ACTION_DOWN) {
                     dim_state = MainActivity.dim_screen(dim_state, getActivity());
+                    MainActivity.dim_screen(false,getActivity());
+
                 }
                 return false;
             }
