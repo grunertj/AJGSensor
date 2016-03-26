@@ -1,6 +1,7 @@
 package com.jwg.grunert.ajgsensor;
 
 import android.content.Context;
+import android.hardware.Sensor;
 import android.provider.Settings;
 import android.support.design.widget.TabLayout;
 import android.support.design.widget.TabLayout;
@@ -18,6 +19,7 @@ import android.os.Bundle;
 import android.view.MotionEvent;
 import android.view.ViewGroup;
 import android.view.WindowManager;
+import android.widget.CheckBox;
 
 public class MainActivity extends AppCompatActivity {
     String global_fragments[];
@@ -26,6 +28,15 @@ public class MainActivity extends AppCompatActivity {
     DebugFragment debugFragment=null;
     TabLayout tabLayout;
     ViewPager viewPager;
+    static final int TYPE_GPS = 0;
+
+    static final int OVERRIDE = 1;
+    static final int APPEND = 2;
+    static final int NEW = 3;
+
+    static int file_mode = NEW;
+
+    static boolean[] log;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -34,6 +45,16 @@ public class MainActivity extends AppCompatActivity {
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_main);
         getWindow().addFlags(WindowManager.LayoutParams.FLAG_KEEP_SCREEN_ON);
+
+        log = new boolean[100];
+
+        log[TYPE_GPS] = false;
+        log[Sensor.TYPE_ACCELEROMETER] = false;
+        log[Sensor.TYPE_STEP_DETECTOR] = false;
+        log[Sensor.TYPE_STEP_COUNTER] = false;
+        log[Sensor.TYPE_GYROSCOPE] = false;
+        log[Sensor.TYPE_GYROSCOPE_UNCALIBRATED] = false;
+        log[Sensor.TYPE_ROTATION_VECTOR] = false;
 
         if (mainFragment == null) {
             mainFragment = new MainFragment();
