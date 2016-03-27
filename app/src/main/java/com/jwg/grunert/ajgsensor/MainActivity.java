@@ -50,6 +50,7 @@ public class MainActivity extends AppCompatActivity {
 
         log[TYPE_GPS] = false;
         log[Sensor.TYPE_ACCELEROMETER] = false;
+        log[Sensor.TYPE_LINEAR_ACCELERATION] = false;
         log[Sensor.TYPE_STEP_DETECTOR] = false;
         log[Sensor.TYPE_STEP_COUNTER] = false;
         log[Sensor.TYPE_GYROSCOPE] = false;
