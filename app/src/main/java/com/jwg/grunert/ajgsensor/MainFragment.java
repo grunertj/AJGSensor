@@ -209,7 +209,7 @@ public class MainFragment extends Fragment implements SensorEventListener, Locat
         FileWriter file;
         if (on == true) {
             if (sensor_file_name == null || MainActivity.file_mode == MainActivity.NEW) {
-                sensor_file_name = String.format("%s-%s.txt","sensor", timestamp);
+                sensor_file_name = String.format("%s-%s.gpx","sensor", timestamp);
             }
             try {
                 if (MainActivity.file_mode == MainActivity.APPEND) {
