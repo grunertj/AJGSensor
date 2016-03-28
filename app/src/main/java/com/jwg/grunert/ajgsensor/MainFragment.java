@@ -135,7 +135,7 @@ public class MainFragment extends Fragment implements SensorEventListener, Locat
 
     public String getCurrentTimeStamp(int which) {
         if (which == SHORT) {
-            return new SimpleDateFormat("yyyy-MM-dd-HH:mm:ss").format(new Date());
+            return new SimpleDateFormat("yyyy_MM_dd_HH_mm_ss").format(new Date());
         } else {
             return new SimpleDateFormat("yyyy-MM-dd HH:mm:ss.SSS").format(new Date());
         }
@@ -209,7 +209,7 @@ public class MainFragment extends Fragment implements SensorEventListener, Locat
         FileWriter file;
         if (on == true) {
             if (sensor_file_name == null || MainActivity.file_mode == MainActivity.NEW) {
-                sensor_file_name = String.format("%s-%s.gpx","sensor", timestamp);
+                sensor_file_name = String.format("%s-%s.txt","sensor", timestamp);
             }
             try {
                 if (MainActivity.file_mode == MainActivity.APPEND) {
@@ -241,7 +241,7 @@ public class MainFragment extends Fragment implements SensorEventListener, Locat
         FileWriter file;
         if (on && MainActivity.log[MainActivity.TYPE_GPS]) {
             if (gps_file_name == null || MainActivity.file_mode == MainActivity.NEW) {
-                gps_file_name = String.format("%s-%s.txt","location", timestamp);
+                gps_file_name = String.format("%s-%s.gpx","location", timestamp);
             }
             try {
                 if (MainActivity.file_mode == MainActivity.APPEND) {
@@ -364,6 +364,7 @@ public class MainFragment extends Fragment implements SensorEventListener, Locat
     public void onLocationChanged(Location location) {
         String time_string,trkpt_start,trkpt_end,speed,hdop;
         long timestamp;
+        boolean valid_data = false;
 
         // time from from last location fix :
         // timestamp = location.getTime();
@@ -388,12 +389,14 @@ public class MainFragment extends Fragment implements SensorEventListener, Locat
         }
 
         if (location.hasSpeed() && location.getAccuracy() < 10 && location.hasBearing() && location.hasAccuracy()) {
+            valid_data = true;
             speed = String.format(Locale.US,"        <extensions>\n          <speed>%.12f</speed>\n        </extensions>\n", location.getSpeed());
         } else {
+            valid_data = false;
             speed = null;
         }
 
-        if (gps_file != null) {
+        if (gps_file != null && valid_data) {
             try {
                 gps_file.append(trkpt_start);
                 gps_file.append(time_string);
