@@ -10,9 +10,10 @@
         android:checkedButton="@+id/radioButtonNew"
         android:id="@+id/radioGroup"
         android:orientation="horizontal"
+        android:layout_marginTop="33dp"
         android:layout_below="@+id/textView"
-        android:layout_centerHorizontal="true"
-        android:layout_marginTop="32dp">
+        android:layout_alignLeft="@+id/textView2"
+        android:layout_alignStart="@+id/textView2">
 
         <RadioButton
             android:layout_width="wrap_content"
@@ -20,15 +21,6 @@
             android:layout_marginBottom="@dimen/activity_vertical_margin"
             android:text="New"
             android:id="@+id/radioButtonNew"
-            android:layout_gravity="left"
-            android:checked="false" />
-
-        <RadioButton
-            android:layout_width="wrap_content"
-            android:layout_height="wrap_content"
-            android:layout_marginBottom="@dimen/activity_vertical_margin"
-            android:text="Append"
-            android:id="@+id/radioButtonAppend"
             android:layout_gravity="left"
             android:checked="false" />
 
@@ -70,6 +62,16 @@
         android:layout_below="@+id/radioGroup"
         android:layout_centerHorizontal="true"
         android:layout_marginTop="@dimen/activity_vertical_margin" />
+
+    <CheckBox
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:text="Compress"
+        android:id="@+id/checkBoxCompress"
+        android:checked="false"
+        android:layout_alignTop="@+id/radioGroup"
+        android:layout_toRightOf="@+id/radioGroup"
+        android:layout_toEndOf="@+id/radioGroup" />
 
 
 </RelativeLayout>

@@ -2,6 +2,8 @@ package com.jwg.grunert.ajgsensor;
 
 
 import android.content.Context;
+import android.content.Intent;
+import android.graphics.Color;
 import android.hardware.Sensor;
 import android.hardware.SensorEvent;
 import android.hardware.SensorEventListener;
@@ -10,6 +12,8 @@ import android.hardware.SensorManager;
 import android.location.Location;
 import android.location.LocationListener;
 import android.location.LocationManager;
+import android.net.Uri;
+import android.os.Build;
 import android.os.Bundle;
 import android.os.Environment;
 import android.provider.Settings;
@@ -25,12 +29,15 @@ import android.widget.Toast;
 
 import java.io.BufferedWriter;
 import java.io.File;
+import java.io.FileOutputStream;
 import java.io.FileWriter;
 import java.io.IOException;
+import java.io.OutputStreamWriter;
 import java.text.SimpleDateFormat;
 import java.util.Date;
 import java.util.Locale;
 import java.util.TimeZone;
+import java.util.zip.GZIPOutputStream;
 
 public class MainFragment extends Fragment implements SensorEventListener, LocationListener {
     static final int LONG = 0;
@@ -38,12 +45,10 @@ public class MainFragment extends Fragment implements SensorEventListener, Locat
     static final long MIN_TIME_IN_MILLISECONDS = 1000;
     static final float MIN_DISTANCE_IN_METERS = 1;
 
-
     static final String directory_name = Environment.getExternalStoragePublicDirectory(Environment.DIRECTORY_DOWNLOADS).toString() + File.separator + "PaddleSensorBis";
 
-    boolean dim_state = false;
-    TextView textViewRunning, textViewFile,textViewLocation,textViewLatitude,textViewLongitude;
-    Button buttonStart, buttonStop;
+    TextView textViewRunning, textViewFile, textViewGPSFile, textViewLocation,textViewLatitude,textViewLongitude;
+    Button buttonStart, buttonStop, buttonDim;
     SimpleDateFormat gpx_simpleDateFormat;
 
 
@@ -65,18 +70,19 @@ public class MainFragment extends Fragment implements SensorEventListener, Locat
         View view = inflater.inflate(R.layout.fragment_main, container, false);
 
         textViewFile = (TextView) view.findViewById(R.id.textViewFile);
+        textViewGPSFile = (TextView) view.findViewById(R.id.textViewGPSFile);
         textViewRunning = (TextView) view.findViewById(R.id.textViewRunning);
         textViewLocation = (TextView) view.findViewById(R.id.textViewLocation);
         textViewLatitude = (TextView) view.findViewById(R.id.textViewLatitude);
         textViewLongitude = (TextView) view.findViewById(R.id.textViewLongitude);
         buttonStart = (Button) view.findViewById(R.id.buttonStart);
         buttonStop = (Button) view.findViewById(R.id.buttonStop);
+        buttonDim = (Button) view.findViewById(R.id.buttonDim);
 
         File directory = new File(directory_name);
 
         gpx_simpleDateFormat = new SimpleDateFormat("yyyy-MM-dd'T'HH:mm:ss'Z'");
         gpx_simpleDateFormat.setTimeZone(TimeZone.getTimeZone("UTC"));
-
 
         if (directory.exists() == false) {
             boolean success = directory.mkdir();
@@ -89,10 +95,16 @@ public class MainFragment extends Fragment implements SensorEventListener, Locat
             @Override
             public boolean onTouch(View v, MotionEvent event) {
                 if (event.getAction() == MotionEvent.ACTION_DOWN) {
-                    dim_state = MainActivity.dim_screen(dim_state, getActivity());
-                    MainActivity.dim_screen(false, getActivity());
+                    MainActivity.dim_state = MainActivity.dim_screen(false, getActivity());
                 }
                 return false;
+            }
+        });
+
+        buttonDim.setOnClickListener(new View.OnClickListener() {
+            @Override
+            public void onClick(View v) {
+                MainActivity.dim_state = MainActivity.dim_screen(MainActivity.dim_state, getActivity());
             }
         });
 
@@ -106,6 +118,9 @@ public class MainFragment extends Fragment implements SensorEventListener, Locat
                 gpx_header();
                 location(true);
                 buttonStart.setEnabled(false);
+                textViewGPSFile.setEnabled(false);
+                textViewFile.setEnabled(false);
+
             }
         });
 
@@ -118,6 +133,46 @@ public class MainFragment extends Fragment implements SensorEventListener, Locat
                 gpx_footer();
                 location_logging(false, null);
                 buttonStart.setEnabled(true);
+                textViewGPSFile.setEnabled(true);
+                textViewFile.setEnabled(true);
+                Toast.makeText(getActivity().getApplicationContext(), "Click on file name to share.", Toast.LENGTH_SHORT).show();
+            }
+        });
+
+        textViewFile.setOnClickListener(new View.OnClickListener() {
+            @Override
+            public void onClick(View v) {
+                TextView textView = ((TextView) v);
+                String string = textView.getText().toString();
+                Uri uri = Uri.fromFile(new File(getAbsoluteFileName(string)));
+                Intent sendIntent = new Intent();
+                sendIntent.setAction(Intent.ACTION_SEND);
+                sendIntent.addFlags(Intent.FLAG_GRANT_READ_URI_PERMISSION);
+                sendIntent.putExtra(Intent.EXTRA_STREAM, uri);
+                sendIntent.setType("text/plain");
+                // sendIntent.setType("application/zip");
+                Toast.makeText(getActivity().getApplicationContext(), "Sharing file: " + string, Toast.LENGTH_SHORT).show();
+
+                startActivity(sendIntent);
+            }
+        });
+
+        textViewGPSFile.setOnClickListener(new View.OnClickListener() {
+            @Override
+            public void onClick(View v) {
+                if (MainActivity.log[MainActivity.TYPE_GPS]) {
+                    TextView textView = ((TextView) v);
+                    String string = textView.getText().toString();
+                    Uri uri = Uri.fromFile(new File(getAbsoluteFileName(string)));
+                    Intent sendIntent = new Intent();
+                    sendIntent.setAction(Intent.ACTION_SEND);
+                    sendIntent.addFlags(Intent.FLAG_GRANT_READ_URI_PERMISSION);
+                    sendIntent.putExtra(Intent.EXTRA_STREAM, uri);
+                    sendIntent.setType("text/plain");
+                    // sendIntent.setType("application/zip");
+                    Toast.makeText(getActivity().getApplicationContext(), "Sharing file: " + string, Toast.LENGTH_SHORT).show();
+                    startActivity(sendIntent);
+                }
             }
         });
 
@@ -205,6 +260,7 @@ public class MainFragment extends Fragment implements SensorEventListener, Locat
         }
     }
 
+    /*
     void sensor_logging (boolean on, String timestamp) {
         FileWriter file;
         if (on == true) {
@@ -212,16 +268,50 @@ public class MainFragment extends Fragment implements SensorEventListener, Locat
                 sensor_file_name = String.format("%s-%s.txt","sensor", timestamp);
             }
             try {
-                if (MainActivity.file_mode == MainActivity.APPEND) {
-                    file = new FileWriter(getAbsoluteFileName(sensor_file_name), true);
-                } else {
-                    file = new FileWriter(getAbsoluteFileName(sensor_file_name));
-                }
+                file = new FileWriter(getAbsoluteFileName(sensor_file_name));
                 sensor_file = new BufferedWriter(file);
             } catch (IOException e) {
                 Toast.makeText(getActivity().getApplicationContext(), "Could not open file: "+ "" + e + " " + getAbsoluteFileName(sensor_file_name), Toast.LENGTH_LONG).show();
                 e.printStackTrace();
             }
+
+
+            textViewFile.setText(sensor_file_name);
+        } else {
+            if (sensor_file != null) {
+                try {
+                    sensor_file.flush();
+                    sensor_file.close();
+                    sensor_file = null;
+                } catch (IOException e) {
+                    Toast.makeText(getActivity().getApplicationContext(), "Could not close file: "+ "" + e + " " + getAbsoluteFileName(sensor_file_name), Toast.LENGTH_LONG).show();
+                    e.printStackTrace();
+                }
+            }
+        }
+    }
+    */
+
+    void sensor_logging (boolean on, String timestamp) {
+        if (on == true) {
+            if (sensor_file_name == null || MainActivity.file_mode == MainActivity.NEW) {
+                if (MainActivity.COMPRESS) {
+                    sensor_file_name = String.format("%s-%s.txt.gz", "sensor", timestamp);
+                } else {
+                    sensor_file_name = String.format("%s-%s.txt", "sensor", timestamp);
+                }
+            }
+            try {
+                if (MainActivity.COMPRESS) {
+                    sensor_file = new BufferedWriter(new OutputStreamWriter(new GZIPOutputStream(new FileOutputStream(getAbsoluteFileName(sensor_file_name)))));
+                } else {
+                    sensor_file = new BufferedWriter(new FileWriter(getAbsoluteFileName(sensor_file_name)));
+                }
+            } catch (IOException e) {
+                Toast.makeText(getActivity().getApplicationContext(), "Could not open file: "+ "" + e + " " + getAbsoluteFileName(sensor_file_name), Toast.LENGTH_LONG).show();
+                e.printStackTrace();
+            }
+
             textViewFile.setText(sensor_file_name);
         } else {
             if (sensor_file != null) {
@@ -244,17 +334,13 @@ public class MainFragment extends Fragment implements SensorEventListener, Locat
                 gps_file_name = String.format("%s-%s.gpx","location", timestamp);
             }
             try {
-                if (MainActivity.file_mode == MainActivity.APPEND) {
-                    file = new FileWriter(getAbsoluteFileName(gps_file_name), true);
-                } else {
-                    file = new FileWriter(getAbsoluteFileName(gps_file_name));
-                }
+                file = new FileWriter(getAbsoluteFileName(gps_file_name));
                 gps_file = new BufferedWriter(file);
             } catch (IOException e) {
                 Toast.makeText(getActivity().getApplicationContext(), "Could not open file: "+ "" + e + " " + getAbsoluteFileName(gps_file_name), Toast.LENGTH_LONG).show();
                 e.printStackTrace();
             }
-            textViewFile.setText(gps_file_name);
+            textViewGPSFile.setText(gps_file_name);
         } else {
             if (gps_file != null) {
                 try {
@@ -349,13 +435,15 @@ public class MainFragment extends Fragment implements SensorEventListener, Locat
     }
 
     public void gpx_footer() {
-        try {
-            gps_file.append("    </trkseg>\n");
-            gps_file.append("  </trk>\n");
-            gps_file.append("</gpx>\n");
-        } catch (IOException e) {
-            Toast.makeText(getActivity().getApplicationContext(), "Could append to file: " + "" + e + " " + getAbsoluteFileName(gps_file_name), Toast.LENGTH_LONG).show();
-            e.printStackTrace();
+        if (gps_file != null) {
+            try {
+                gps_file.append("    </trkseg>\n");
+                gps_file.append("  </trk>\n");
+                gps_file.append("</gpx>\n");
+            } catch (IOException e) {
+                Toast.makeText(getActivity().getApplicationContext(), "Could append to file: " + "" + e + " " + getAbsoluteFileName(gps_file_name), Toast.LENGTH_LONG).show();
+                e.printStackTrace();
+            }
         }
     }
 
@@ -438,6 +526,10 @@ public class MainFragment extends Fragment implements SensorEventListener, Locat
                 location(true);
             } else if (isResumed()) {
                 location(false);
+            }
+        } else {
+            if (textViewGPSFile != null) {
+                textViewGPSFile.setText("GPS file name (if GPS is enabled)");
             }
         }
     }

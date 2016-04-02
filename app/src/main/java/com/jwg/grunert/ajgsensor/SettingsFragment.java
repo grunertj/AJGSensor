@@ -4,6 +4,7 @@ package com.jwg.grunert.ajgsensor;
 import android.content.Context;
 import android.hardware.Sensor;
 import android.hardware.SensorManager;
+import android.location.LocationManager;
 import android.os.Bundle;
 import android.support.v4.app.Fragment;
 import android.view.LayoutInflater;
@@ -12,9 +13,11 @@ import android.view.View;
 import android.view.ViewGroup;
 import android.widget.AbsListView;
 import android.widget.CheckBox;
+import android.widget.CompoundButton;
 import android.widget.LinearLayout;
 import android.widget.RadioGroup;
 import android.widget.RelativeLayout;
+import android.widget.Toast;
 
 import java.util.ArrayList;
 import java.util.Collections;
@@ -22,12 +25,10 @@ import java.util.Comparator;
 import java.util.List;
 
 public class SettingsFragment extends Fragment {
-    boolean dim_state = false;
-    CheckBox checkBox;
+    CheckBox checkBox, checkBoxCompress, checkBoxGPS;
     ArrayList<CheckBox> checkBoxes;
     SensorManager sensorManager = null;
     RadioGroup radioGroup;
-
 
     public SettingsFragment() {
         // Required empty public constructor
@@ -40,14 +41,13 @@ public class SettingsFragment extends Fragment {
 
         LinearLayout linearLayout = (LinearLayout)view.findViewById(R.id.linearLayout);
         radioGroup = (RadioGroup)view.findViewById(R.id.radioGroup);
+        checkBoxCompress = (CheckBox)view.findViewById(R.id.checkBoxCompress);
 
         view.setOnTouchListener(new View.OnTouchListener() {
             @Override
             public boolean onTouch(View v, MotionEvent event) {
                 if (event.getAction() == MotionEvent.ACTION_DOWN) {
-                    dim_state = MainActivity.dim_screen(dim_state, getActivity());
                     MainActivity.dim_screen(false, getActivity());
-
                 }
                 return false;
             }
@@ -61,9 +61,6 @@ public class SettingsFragment extends Fragment {
                     case R.id.radioButtonOverride:
                         MainActivity.file_mode = MainActivity.OVERRIDE;
                         break;
-                    case R.id.radioButtonAppend:
-                        MainActivity.file_mode = MainActivity.APPEND;
-                        break;
                     case R.id.radioButtonNew:
                         MainActivity.file_mode = MainActivity.NEW;
                         break;
@@ -73,6 +70,19 @@ public class SettingsFragment extends Fragment {
                 }
             }
         });
+
+        checkBoxCompress.setOnCheckedChangeListener(new CompoundButton.OnCheckedChangeListener() {
+            @Override
+            public void onCheckedChanged(CompoundButton buttonView, boolean isChecked) {
+                if (isChecked) {
+                    MainActivity.COMPRESS = true;
+                } else {
+                    MainActivity.COMPRESS = false;
+                }
+            }
+        });
+
+        checkBoxCompress.setChecked(true);
 
         sensorManager = (SensorManager)getActivity().getSystemService(Context.SENSOR_SERVICE);
         List<Sensor> list = sensorManager.getSensorList(Sensor.TYPE_ALL);
@@ -89,12 +99,31 @@ public class SettingsFragment extends Fragment {
 
         checkBoxes = new ArrayList<CheckBox>();
 
-        checkBox = new CheckBox(view.getContext());
-        checkBox.setText("GPS Location");
-        checkBox.setChecked(false);
-        checkBox.setId(MainActivity.TYPE_GPS);
-        checkBoxes.add(checkBox);
-        linearLayout.addView(checkBox);
+        checkBoxGPS = new CheckBox(view.getContext());
+        checkBoxGPS.setText("GPS Location");
+        checkBoxGPS.setChecked(false);
+        checkBoxGPS.setId(MainActivity.TYPE_GPS);
+
+        checkBoxGPS.setOnCheckedChangeListener(new CompoundButton.OnCheckedChangeListener() {
+            @Override
+            public void onCheckedChanged(CompoundButton buttonView, boolean isChecked) {
+                if (isChecked) {
+                    LocationManager locationManager = (LocationManager) getActivity().getSystemService(Context.LOCATION_SERVICE);
+                    if (locationManager.isProviderEnabled(LocationManager.GPS_PROVIDER) == false ) {
+                        MainActivity.log[MainActivity.TYPE_GPS] = false;
+                        checkBoxGPS.setChecked(false);
+                        Toast.makeText(getActivity().getApplicationContext(), "Please enable Location.", Toast.LENGTH_LONG).show();
+                    } else {
+                        MainActivity.log[MainActivity.TYPE_GPS] = true;
+                    }
+                } else {
+                    MainActivity.log[MainActivity.TYPE_GPS] = false;
+                }
+            }
+        });
+
+        checkBoxes.add(checkBoxGPS);
+        linearLayout.addView(checkBoxGPS);
 
         for (Sensor sensor: sensors) {
             switch (sensor.getType()) {
@@ -143,7 +172,7 @@ public class SettingsFragment extends Fragment {
         super.setUserVisibleHint(isVisibleToUser);
 
         if (isVisibleToUser && isResumed()) {
-
+            MainActivity.dim_screen(false, getActivity());
         } else if (isResumed()) {
             for (CheckBox checkBox: checkBoxes) {
                 MainActivity.log[checkBox.getId()] = checkBox.isChecked();

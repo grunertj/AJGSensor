@@ -7,13 +7,12 @@
     <Button
         android:layout_width="wrap_content"
         android:layout_height="wrap_content"
-        android:text="Sensors"
+        android:text="Show sensors"
         android:id="@+id/buttonSensors"
+        android:layout_marginLeft="@dimen/activity_horizontal_margin"
         android:layout_alignParentTop="true"
         android:layout_alignParentLeft="true"
-        android:layout_alignParentStart="true"
-        android:layout_marginLeft="59dp"
-        android:layout_marginStart="59dp" />
+        android:layout_alignParentStart="true" />
 
     <ScrollView
         android:layout_width="match_parent"
@@ -24,7 +23,7 @@
             android:layout_width="wrap_content"
             android:layout_height="wrap_content"
             android:textAppearance="?android:attr/textAppearanceMedium"
-            android:text="Large Text"
+            android:text="Sensors"
             android:id="@+id/textViewSensors"
             android:layout_alignParentLeft="true"
             android:layout_alignParentStart="true" />
@@ -33,11 +32,10 @@
     <Button
         android:layout_width="wrap_content"
         android:layout_height="wrap_content"
-        android:text="Share"
+        android:text="Share sensors"
         android:id="@+id/buttonShare"
-        android:layout_above="@+id/scrollView"
+        android:layout_marginRight="@dimen/activity_horizontal_margin"
+        android:layout_alignParentTop="true"
         android:layout_alignParentRight="true"
-        android:layout_alignParentEnd="true"
-        android:layout_marginRight="45dp"
-        android:layout_marginEnd="45dp" />
+        android:layout_alignParentEnd="true" />
 </RelativeLayout>

@@ -33,6 +33,9 @@ public class MainActivity extends AppCompatActivity {
     static final int OVERRIDE = 1;
     static final int APPEND = 2;
     static final int NEW = 3;
+    static boolean COMPRESS = true;
+
+    static boolean dim_state = true;
 
     static int file_mode = NEW;
 
