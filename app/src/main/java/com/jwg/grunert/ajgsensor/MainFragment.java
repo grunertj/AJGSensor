@@ -44,10 +44,16 @@ public class MainFragment extends Fragment implements SensorEventListener, Locat
     static final int SHORT = 1;
     static final long MIN_TIME_IN_MILLISECONDS = 1000;
     static final float MIN_DISTANCE_IN_METERS = 1;
+    static boolean start_logging = false;
+
+    static double LastLatitude, LastLongitude, TotalDistance, MaxSpeed, AverageSpeed, TotalSpeed;
+    static int log_counter;
+    float [] Distance = new float[10];
 
     static final String directory_name = Environment.getExternalStoragePublicDirectory(Environment.DIRECTORY_DOWNLOADS).toString() + File.separator + "PaddleSensorBis";
 
     TextView textViewRunning, textViewFile, textViewGPSFile, textViewLocation,textViewLatitude,textViewLongitude;
+    TextView textViewDistance, textViewAverageSpeed, textViewMaxSpeed;
     Button buttonStart, buttonStop, buttonDim;
     SimpleDateFormat gpx_simpleDateFormat;
 
@@ -75,6 +81,9 @@ public class MainFragment extends Fragment implements SensorEventListener, Locat
         textViewLocation = (TextView) view.findViewById(R.id.textViewLocation);
         textViewLatitude = (TextView) view.findViewById(R.id.textViewLatitude);
         textViewLongitude = (TextView) view.findViewById(R.id.textViewLongitude);
+        textViewDistance = (TextView) view.findViewById(R.id.textViewDistance);
+        textViewAverageSpeed = (TextView) view.findViewById(R.id.textViewAverageSpeed);
+        textViewMaxSpeed = (TextView) view.findViewById(R.id.textViewMaxSpeed);
         buttonStart = (Button) view.findViewById(R.id.buttonStart);
         buttonStop = (Button) view.findViewById(R.id.buttonStop);
         buttonDim = (Button) view.findViewById(R.id.buttonDim);
@@ -186,6 +195,7 @@ public class MainFragment extends Fragment implements SensorEventListener, Locat
         sensor_logging(false, null);
         location(false);
         location_logging(false, null);
+        start_logging = false;
     }
 
     public String getCurrentTimeStamp(int which) {
@@ -403,7 +413,9 @@ public class MainFragment extends Fragment implements SensorEventListener, Locat
         }
         try {
             if (event_type!=null) {
-                sensor_file.append(event_type);
+                if (start_logging && MainActivity.log[MainActivity.TYPE_GPS] || MainActivity.log[MainActivity.TYPE_GPS] == false) {
+                    sensor_file.append(event_type);
+                }
             }
         } catch (IOException e) {
             Toast.makeText(getActivity().getApplicationContext(), "Could append to file: "+ "" + e + " " + getAbsoluteFileName(sensor_file_name), Toast.LENGTH_LONG).show();
@@ -476,8 +488,39 @@ public class MainFragment extends Fragment implements SensorEventListener, Locat
             hdop = null;
         }
 
-        if (location.hasSpeed() && location.getAccuracy() < 10 && location.hasBearing() && location.hasAccuracy()) {
-            valid_data = true;
+        if ((location.hasSpeed() && location.getAccuracy() < 20 && location.hasBearing() && location.hasAccuracy())
+                || (location.hasSpeed() && location.getAccuracy() < 10 && location.hasAccuracy())) {
+            if (start_logging == false && location.getSpeed() > 0.3) {
+                start_logging = true;
+                LastLatitude = location.getLatitude();
+                LastLongitude = location.getLongitude();
+                TotalDistance = 0.0f;
+                MaxSpeed = 0.0f;
+                AverageSpeed = 0.0f;
+                TotalSpeed = 0.0f;
+                log_counter = 1;
+            }
+            if (start_logging) {
+                valid_data = true;
+            }
+
+            Location.distanceBetween(location.getLatitude(), location.getLongitude(), LastLatitude, LastLongitude, Distance);
+            TotalDistance  = TotalDistance + Distance[0];
+            LastLatitude = location.getLatitude();
+            LastLongitude = location.getLongitude();
+
+            if (MaxSpeed < location.getSpeed()) {
+                MaxSpeed = location.getSpeed();
+            }
+
+            TotalSpeed = TotalSpeed + location.getSpeed();
+            AverageSpeed = TotalSpeed / log_counter;
+            log_counter++;
+
+            textViewDistance.setText(String.format(Locale.US,"Distance: %.2f km",TotalDistance / 1000.0f));
+            textViewAverageSpeed.setText(String.format(Locale.US,"Average Speed: %d km/h",(int)Math.round(AverageSpeed * 3.6)));
+            textViewMaxSpeed.setText(String.format(Locale.US,"Max Speed: %d km/h",(int)Math.round(MaxSpeed * 3.6)));
+
             speed = String.format(Locale.US,"        <extensions>\n          <speed>%.12f</speed>\n        </extensions>\n", location.getSpeed());
         } else {
             valid_data = false;

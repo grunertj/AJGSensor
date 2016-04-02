@@ -129,6 +129,7 @@ public class SettingsFragment extends Fragment {
             switch (sensor.getType()) {
                 case Sensor.TYPE_ACCELEROMETER:
                 case Sensor.TYPE_LINEAR_ACCELERATION:
+                case Sensor.TYPE_GYROSCOPE:
                     checkBox = new CheckBox(view.getContext());
                     checkBox.setText(sensor.getType() + " " + sensor.getName() + " " + sensor.getVendor());
                     checkBox.setChecked(true);
@@ -138,7 +139,6 @@ public class SettingsFragment extends Fragment {
                     break;
                 case Sensor.TYPE_STEP_DETECTOR:
                 case Sensor.TYPE_STEP_COUNTER:
-                case Sensor.TYPE_GYROSCOPE:
                 case Sensor.TYPE_GYROSCOPE_UNCALIBRATED:
                 case Sensor.TYPE_ROTATION_VECTOR:
                     checkBox = new CheckBox(view.getContext());
