@@ -413,7 +413,9 @@ public class MainFragment extends Fragment implements SensorEventListener, Locat
         }
         try {
             if (event_type!=null) {
-                if (start_logging && MainActivity.log[MainActivity.TYPE_GPS] || MainActivity.log[MainActivity.TYPE_GPS] == false) {
+                if (start_logging && MainActivity.log[MainActivity.TYPE_GPS]
+                        || MainActivity.log[MainActivity.TYPE_GPS] == false
+                        || MainActivity.DELAYED == false) {
                     sensor_file.append(event_type);
                 }
             }
@@ -490,7 +492,8 @@ public class MainFragment extends Fragment implements SensorEventListener, Locat
 
         if ((location.hasSpeed() && location.getAccuracy() < 20 && location.hasBearing() && location.hasAccuracy())
                 || (location.hasSpeed() && location.getAccuracy() < 10 && location.hasAccuracy())) {
-            if (start_logging == false && location.getSpeed() > 0.3) {
+
+            if ((start_logging == false && (location.getSpeed() > 0.3) || MainActivity.DELAYED == false)) {
                 start_logging = true;
                 LastLatitude = location.getLatitude();
                 LastLongitude = location.getLongitude();
@@ -500,6 +503,7 @@ public class MainFragment extends Fragment implements SensorEventListener, Locat
                 TotalSpeed = 0.0f;
                 log_counter = 1;
             }
+
             if (start_logging) {
                 valid_data = true;
             }

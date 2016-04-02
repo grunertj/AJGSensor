@@ -25,7 +25,7 @@ import java.util.Comparator;
 import java.util.List;
 
 public class SettingsFragment extends Fragment {
-    CheckBox checkBox, checkBoxCompress, checkBoxGPS;
+    CheckBox checkBox, checkBoxCompress, checkBoxGPS, checkBoxDelayed;
     ArrayList<CheckBox> checkBoxes;
     SensorManager sensorManager = null;
     RadioGroup radioGroup;
@@ -42,6 +42,7 @@ public class SettingsFragment extends Fragment {
         LinearLayout linearLayout = (LinearLayout)view.findViewById(R.id.linearLayout);
         radioGroup = (RadioGroup)view.findViewById(R.id.radioGroup);
         checkBoxCompress = (CheckBox)view.findViewById(R.id.checkBoxCompress);
+        checkBoxDelayed = (CheckBox)view.findViewById(R.id.checkBoxDelayed);
 
         view.setOnTouchListener(new View.OnTouchListener() {
             @Override
@@ -57,7 +58,7 @@ public class SettingsFragment extends Fragment {
         radioGroup.setOnCheckedChangeListener(new RadioGroup.OnCheckedChangeListener() {
             @Override
             public void onCheckedChanged(RadioGroup group, int checkedId) {
-             switch (checkedId) {
+                switch (checkedId) {
                     case R.id.radioButtonOverride:
                         MainActivity.file_mode = MainActivity.OVERRIDE;
                         break;
@@ -82,7 +83,19 @@ public class SettingsFragment extends Fragment {
             }
         });
 
+        checkBoxDelayed.setOnCheckedChangeListener(new CompoundButton.OnCheckedChangeListener() {
+            @Override
+            public void onCheckedChanged(CompoundButton buttonView, boolean isChecked) {
+                if (isChecked) {
+                    MainActivity.DELAYED = true;
+                } else {
+                    MainActivity.DELAYED = false;
+                }
+            }
+        });
+
         checkBoxCompress.setChecked(true);
+        checkBoxDelayed.setChecked(true);
 
         sensorManager = (SensorManager)getActivity().getSystemService(Context.SENSOR_SERVICE);
         List<Sensor> list = sensorManager.getSensorList(Sensor.TYPE_ALL);
