@@ -90,7 +90,7 @@ public class MainFragment extends Fragment implements SensorEventListener, Locat
 
         File directory = new File(directory_name);
 
-        gpx_simpleDateFormat = new SimpleDateFormat("yyyy-MM-dd'T'HH:mm:ss'Z'");
+        gpx_simpleDateFormat = new SimpleDateFormat("yyyy-MM-dd'T'HH:mm:ss.SSS'Z'");
         gpx_simpleDateFormat.setTimeZone(TimeZone.getTimeZone("UTC"));
 
         if (directory.exists() == false) {
