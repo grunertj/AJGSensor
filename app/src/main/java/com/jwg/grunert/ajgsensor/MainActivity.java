@@ -35,7 +35,7 @@ public class MainActivity extends AppCompatActivity {
     static final int APPEND = 2;
     static final int NEW = 3;
 
-    static int SENSOR_DELAY = SensorManager.SENSOR_DELAY_NORMAL;
+    static int SENSOR_DELAY = SensorManager.SENSOR_DELAY_FASTEST;
 
     static boolean COMPRESS = true;
     static boolean FILTERED = false;
@@ -46,13 +46,14 @@ public class MainActivity extends AppCompatActivity {
 
     static boolean[] log;
 
+    static int curBrightnessValue;
+
     @Override
     protected void onCreate(Bundle savedInstanceState) {
-
-
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_main);
         getWindow().addFlags(WindowManager.LayoutParams.FLAG_KEEP_SCREEN_ON);
+
 
         log = new boolean[100];
 
@@ -157,6 +158,11 @@ public class MainActivity extends AppCompatActivity {
     static public boolean dim_screen (boolean on, Context context) {
         if (on == true) {
             try {
+                try {
+                    curBrightnessValue = android.provider.Settings.System.getInt(context.getContentResolver(),Settings.System.SCREEN_BRIGHTNESS);
+                } catch (Settings.SettingNotFoundException e) {
+                    e.printStackTrace();
+                }
                 Settings.System.putInt(context.getContentResolver(), Settings.System.SCREEN_BRIGHTNESS_MODE, Settings.System.SCREEN_BRIGHTNESS_MODE_MANUAL);
                 Settings.System.putInt(context.getContentResolver(), Settings.System.SCREEN_BRIGHTNESS, 0);
             } catch (Exception e) {}
@@ -164,7 +170,11 @@ public class MainActivity extends AppCompatActivity {
         } else {
             try {
                 Settings.System.putInt(context.getContentResolver(), Settings.System.SCREEN_BRIGHTNESS_MODE, Settings.System.SCREEN_BRIGHTNESS_MODE_MANUAL);
-                Settings.System.putInt(context.getContentResolver(), Settings.System.SCREEN_BRIGHTNESS, 200);
+                if (curBrightnessValue > 64) {
+                    Settings.System.putInt(context.getContentResolver(), Settings.System.SCREEN_BRIGHTNESS, curBrightnessValue);
+                } else {
+                    Settings.System.putInt(context.getContentResolver(), Settings.System.SCREEN_BRIGHTNESS, 64);
+                }
             } catch (Exception e) {}
             return  true;
         }
