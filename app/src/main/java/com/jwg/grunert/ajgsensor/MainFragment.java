@@ -12,6 +12,7 @@ import android.hardware.SensorManager;
 import android.location.Location;
 import android.location.LocationListener;
 import android.location.LocationManager;
+import android.media.MediaScannerConnection;
 import android.net.Uri;
 import android.os.Build;
 import android.os.Bundle;
@@ -44,16 +45,16 @@ public class MainFragment extends Fragment implements SensorEventListener, Locat
     static final int SHORT = 1;
     static final long MIN_TIME_IN_MILLISECONDS = 1000;
     static final float MIN_DISTANCE_IN_METERS = 1;
-    static boolean start_logging = false;
 
-    static double LastLatitude, LastLongitude, TotalDistance, MaxSpeed, AverageSpeed, TotalSpeed;
+    static double LastLatitude, LastLongitude, TotalDistance, MaxSpeed, AverageSpeed, TotalSpeed, CurrentSpeed;
     static int log_counter;
+    static boolean first_location = true;
     float [] Distance = new float[10];
 
     static final String directory_name = Environment.getExternalStoragePublicDirectory(Environment.DIRECTORY_DOWNLOADS).toString() + File.separator + "PaddleSensorBis";
 
     TextView textViewRunning, textViewFile, textViewGPSFile, textViewLocation,textViewLatitude,textViewLongitude;
-    TextView textViewDistance, textViewAverageSpeed, textViewMaxSpeed;
+    TextView textViewDistance, textViewAverageSpeed, textViewMaxSpeed, textViewCurrentSpeed;
     Button buttonStart, buttonStop, buttonDim;
     SimpleDateFormat gpx_simpleDateFormat;
 
@@ -84,13 +85,14 @@ public class MainFragment extends Fragment implements SensorEventListener, Locat
         textViewDistance = (TextView) view.findViewById(R.id.textViewDistance);
         textViewAverageSpeed = (TextView) view.findViewById(R.id.textViewAverageSpeed);
         textViewMaxSpeed = (TextView) view.findViewById(R.id.textViewMaxSpeed);
+        textViewCurrentSpeed = (TextView) view.findViewById(R.id.textViewCurrentSpeed);
         buttonStart = (Button) view.findViewById(R.id.buttonStart);
         buttonStop = (Button) view.findViewById(R.id.buttonStop);
         buttonDim = (Button) view.findViewById(R.id.buttonDim);
 
         File directory = new File(directory_name);
 
-        gpx_simpleDateFormat = new SimpleDateFormat("yyyy-MM-dd'T'HH:mm:ss.SSS'Z'");
+        gpx_simpleDateFormat = new SimpleDateFormat("yyyy-MM-dd'T'HH:mm:ss'Z'");
         gpx_simpleDateFormat.setTimeZone(TimeZone.getTimeZone("UTC"));
 
         if (directory.exists() == false) {
@@ -129,7 +131,6 @@ public class MainFragment extends Fragment implements SensorEventListener, Locat
                 buttonStart.setEnabled(false);
                 textViewGPSFile.setEnabled(false);
                 textViewFile.setEnabled(false);
-
             }
         });
 
@@ -195,7 +196,6 @@ public class MainFragment extends Fragment implements SensorEventListener, Locat
         sensor_logging(false, null);
         location(false);
         location_logging(false, null);
-        start_logging = false;
     }
 
     public String getCurrentTimeStamp(int which) {
@@ -222,25 +222,25 @@ public class MainFragment extends Fragment implements SensorEventListener, Locat
             }
 
             if (MainActivity.log[Sensor.TYPE_ACCELEROMETER]) {
-                sensorManager.registerListener(this, sensorManager.getDefaultSensor(Sensor.TYPE_ACCELEROMETER), SensorManager.SENSOR_DELAY_NORMAL);
+                sensorManager.registerListener(this, sensorManager.getDefaultSensor(Sensor.TYPE_ACCELEROMETER), MainActivity.SENSOR_DELAY);
             }
             if (MainActivity.log[Sensor.TYPE_LINEAR_ACCELERATION]) {
-                sensorManager.registerListener(this, sensorManager.getDefaultSensor(Sensor.TYPE_LINEAR_ACCELERATION), SensorManager.SENSOR_DELAY_NORMAL);
+                sensorManager.registerListener(this, sensorManager.getDefaultSensor(Sensor.TYPE_LINEAR_ACCELERATION), MainActivity.SENSOR_DELAY);
             }
             if (MainActivity.log[Sensor.TYPE_STEP_DETECTOR]) {
-                sensorManager.registerListener(this, sensorManager.getDefaultSensor(Sensor.TYPE_STEP_DETECTOR), SensorManager.SENSOR_DELAY_NORMAL);
+                sensorManager.registerListener(this, sensorManager.getDefaultSensor(Sensor.TYPE_STEP_DETECTOR), MainActivity.SENSOR_DELAY);
             }
             if (MainActivity.log[Sensor.TYPE_STEP_COUNTER]) {
-                sensorManager.registerListener(this, sensorManager.getDefaultSensor(Sensor.TYPE_STEP_COUNTER), SensorManager.SENSOR_DELAY_NORMAL);
+                sensorManager.registerListener(this, sensorManager.getDefaultSensor(Sensor.TYPE_STEP_COUNTER), MainActivity.SENSOR_DELAY);
             }
             if (MainActivity.log[Sensor.TYPE_GYROSCOPE]) {
-                sensorManager.registerListener(this, sensorManager.getDefaultSensor(Sensor.TYPE_GYROSCOPE), SensorManager.SENSOR_DELAY_NORMAL);
+                sensorManager.registerListener(this, sensorManager.getDefaultSensor(Sensor.TYPE_GYROSCOPE), MainActivity.SENSOR_DELAY);
             }
             if (MainActivity.log[Sensor.TYPE_GYROSCOPE_UNCALIBRATED]) {
-                sensorManager.registerListener(this, sensorManager.getDefaultSensor(Sensor.TYPE_GYROSCOPE_UNCALIBRATED), SensorManager.SENSOR_DELAY_NORMAL);
+                sensorManager.registerListener(this, sensorManager.getDefaultSensor(Sensor.TYPE_GYROSCOPE_UNCALIBRATED), MainActivity.SENSOR_DELAY);
             }
             if (MainActivity.log[Sensor.TYPE_ROTATION_VECTOR]) {
-                sensorManager.registerListener(this, sensorManager.getDefaultSensor(Sensor.TYPE_ROTATION_VECTOR), SensorManager.SENSOR_DELAY_NORMAL);
+                sensorManager.registerListener(this, sensorManager.getDefaultSensor(Sensor.TYPE_ROTATION_VECTOR), MainActivity.SENSOR_DELAY);
             }
         } else {
             if (sensorManager != null) {
@@ -250,6 +250,7 @@ public class MainFragment extends Fragment implements SensorEventListener, Locat
     }
 
     void location (boolean on) {
+        first_location = true;
         if (on && MainActivity.log[MainActivity.TYPE_GPS]) {
             if (locationManager == null) {
                 locationManager = (LocationManager) getActivity().getSystemService(Context.LOCATION_SERVICE);
@@ -269,38 +270,6 @@ public class MainFragment extends Fragment implements SensorEventListener, Locat
             }
         }
     }
-
-    /*
-    void sensor_logging (boolean on, String timestamp) {
-        FileWriter file;
-        if (on == true) {
-            if (sensor_file_name == null || MainActivity.file_mode == MainActivity.NEW) {
-                sensor_file_name = String.format("%s-%s.txt","sensor", timestamp);
-            }
-            try {
-                file = new FileWriter(getAbsoluteFileName(sensor_file_name));
-                sensor_file = new BufferedWriter(file);
-            } catch (IOException e) {
-                Toast.makeText(getActivity().getApplicationContext(), "Could not open file: "+ "" + e + " " + getAbsoluteFileName(sensor_file_name), Toast.LENGTH_LONG).show();
-                e.printStackTrace();
-            }
-
-
-            textViewFile.setText(sensor_file_name);
-        } else {
-            if (sensor_file != null) {
-                try {
-                    sensor_file.flush();
-                    sensor_file.close();
-                    sensor_file = null;
-                } catch (IOException e) {
-                    Toast.makeText(getActivity().getApplicationContext(), "Could not close file: "+ "" + e + " " + getAbsoluteFileName(sensor_file_name), Toast.LENGTH_LONG).show();
-                    e.printStackTrace();
-                }
-            }
-        }
-    }
-    */
 
     void sensor_logging (boolean on, String timestamp) {
         if (on == true) {
@@ -329,6 +298,7 @@ public class MainFragment extends Fragment implements SensorEventListener, Locat
                     sensor_file.flush();
                     sensor_file.close();
                     sensor_file = null;
+                    MediaScannerConnection.scanFile(getActivity().getApplicationContext(), new String[]{getAbsoluteFileName(sensor_file_name)}, null, null);
                 } catch (IOException e) {
                     Toast.makeText(getActivity().getApplicationContext(), "Could not close file: "+ "" + e + " " + getAbsoluteFileName(sensor_file_name), Toast.LENGTH_LONG).show();
                     e.printStackTrace();
@@ -357,6 +327,7 @@ public class MainFragment extends Fragment implements SensorEventListener, Locat
                     gps_file.flush();
                     gps_file.close();
                     gps_file = null;
+                    MediaScannerConnection.scanFile(getActivity().getApplicationContext(), new String[]{getAbsoluteFileName(gps_file_name)}, null, null);
                 } catch (IOException e) {
                     Toast.makeText(getActivity().getApplicationContext(), "Could not close file: "+ "" + e + " " + getAbsoluteFileName(gps_file_name), Toast.LENGTH_LONG).show();
                     e.printStackTrace();
@@ -364,7 +335,6 @@ public class MainFragment extends Fragment implements SensorEventListener, Locat
             }
         }
     }
-
 
     @Override
     public void onSensorChanged(SensorEvent event) {
@@ -413,11 +383,7 @@ public class MainFragment extends Fragment implements SensorEventListener, Locat
         }
         try {
             if (event_type!=null) {
-                if (start_logging && MainActivity.log[MainActivity.TYPE_GPS]
-                        || MainActivity.log[MainActivity.TYPE_GPS] == false
-                        || MainActivity.DELAYED == false) {
-                    sensor_file.append(event_type);
-                }
+                sensor_file.append(event_type);
             }
         } catch (IOException e) {
             Toast.makeText(getActivity().getApplicationContext(), "Could append to file: "+ "" + e + " " + getAbsoluteFileName(sensor_file_name), Toast.LENGTH_LONG).show();
@@ -464,7 +430,9 @@ public class MainFragment extends Fragment implements SensorEventListener, Locat
     // http://stackoverflow.com/questions/6993322/how-do-i-get-the-hdop-or-vdop-values-from-the-gps-locationmanager
     @Override
     public void onLocationChanged(Location location) {
-        String time_string,trkpt_start,trkpt_end,speed,hdop;
+        String time_string,trkpt_start,trkpt_end,speed=null,hdop=null,provider_name=null;
+        String hasSpeed_name=null, hasAccuracy_name=null, hasBearing_name=null, Accuracy_name=null;
+
         long timestamp;
         boolean valid_data = false;
 
@@ -491,41 +459,56 @@ public class MainFragment extends Fragment implements SensorEventListener, Locat
         }
 
         if ((location.hasSpeed() && location.getAccuracy() < 20 && location.hasBearing() && location.hasAccuracy())
-                || (location.hasSpeed() && location.getAccuracy() < 10 && location.hasAccuracy())) {
+                || (location.hasSpeed() && location.getAccuracy() < 10 && location.hasAccuracy())
+                || MainActivity.FILTERED == false) {
 
-            if ((start_logging == false && (location.getSpeed() > 0.3) || MainActivity.DELAYED == false)) {
-                start_logging = true;
+            valid_data = true;
+
+            if (first_location) {
+                first_location = false;
                 LastLatitude = location.getLatitude();
                 LastLongitude = location.getLongitude();
                 TotalDistance = 0.0f;
                 MaxSpeed = 0.0f;
                 AverageSpeed = 0.0f;
                 TotalSpeed = 0.0f;
+                CurrentSpeed = 0.0f;
                 log_counter = 1;
             }
 
-            if (start_logging) {
-                valid_data = true;
-            }
-
             Location.distanceBetween(location.getLatitude(), location.getLongitude(), LastLatitude, LastLongitude, Distance);
+
             TotalDistance  = TotalDistance + Distance[0];
             LastLatitude = location.getLatitude();
             LastLongitude = location.getLongitude();
 
-            if (MaxSpeed < location.getSpeed()) {
-                MaxSpeed = location.getSpeed();
+            if (location.hasSpeed()) {
+                if (MaxSpeed < location.getSpeed()) {
+                    MaxSpeed = location.getSpeed();
+                }
+
+                CurrentSpeed = location.getSpeed();
+
+                TotalSpeed = TotalSpeed + location.getSpeed();
+                AverageSpeed = TotalSpeed / log_counter;
+                log_counter++;
+                speed = String.format(Locale.US, "        <extensions>\n          <speed>%.12f</speed>\n        </extensions>\n", location.getSpeed());
             }
 
-            TotalSpeed = TotalSpeed + location.getSpeed();
-            AverageSpeed = TotalSpeed / log_counter;
-            log_counter++;
+            if (location.hasAccuracy()) {
+                Accuracy_name = String.format(Locale.US,"       <cmt>hasAccuracy %.6f</cmt>\n",location.getAccuracy());
+            }
 
             textViewDistance.setText(String.format(Locale.US,"Distance: %.2f km",TotalDistance / 1000.0f));
             textViewAverageSpeed.setText(String.format(Locale.US,"Average Speed: %d km/h",(int)Math.round(AverageSpeed * 3.6)));
             textViewMaxSpeed.setText(String.format(Locale.US,"Max Speed: %d km/h",(int)Math.round(MaxSpeed * 3.6)));
+            textViewCurrentSpeed.setText(String.format(Locale.US,"Current Speed: %d km/h",(int)Math.round(CurrentSpeed * 3.6)));
 
-            speed = String.format(Locale.US,"        <extensions>\n          <speed>%.12f</speed>\n        </extensions>\n", location.getSpeed());
+            provider_name = String.format(Locale.US,"       <cmt>Provider %s</cmt>\n",location.getProvider());
+            hasSpeed_name = String.format(Locale.US,"       <cmt>hasSpeed %s</cmt>\n",location.hasSpeed());
+            hasAccuracy_name = String.format(Locale.US,"       <cmt>hasAccuracy %s</cmt>\n",location.hasAccuracy());
+            hasBearing_name = String.format(Locale.US,"       <cmt>hasBearing %s</cmt>\n",location.hasBearing());
+
         } else {
             valid_data = false;
             speed = null;
@@ -535,12 +518,13 @@ public class MainFragment extends Fragment implements SensorEventListener, Locat
             try {
                 gps_file.append(trkpt_start);
                 gps_file.append(time_string);
-                if (hdop != null) {
-                    gps_file.append(hdop);
-                }
-                if (speed != null) {
-                    gps_file.append(speed);
-                }
+                if (hdop != null) { gps_file.append(hdop); }
+                if (speed != null) { gps_file.append(speed); }
+                if (provider_name != null) { gps_file.append(provider_name); }
+                if (hasSpeed_name != null) { gps_file.append(hasSpeed_name); }
+                if (hasAccuracy_name != null) { gps_file.append(hasAccuracy_name); }
+                if (hasBearing_name != null) { gps_file.append(hasBearing_name); }
+                if (Accuracy_name != null) { gps_file.append(Accuracy_name); }
                 gps_file.append(trkpt_end);
             } catch (IOException e) {
                 Toast.makeText(getActivity().getApplicationContext(), "Could append to file: " + "" + e + " " + getAbsoluteFileName(gps_file_name), Toast.LENGTH_LONG).show();
@@ -562,6 +546,33 @@ public class MainFragment extends Fragment implements SensorEventListener, Locat
     @Override
     public void onProviderDisabled(String provider) {
 
+    }
+
+    @Override
+    public void onPause() {
+        super.onPause();
+        if (gps_file_name != null) {
+            MediaScannerConnection.scanFile(getActivity().getApplicationContext(), new String[]{getAbsoluteFileName(gps_file_name)}, null, null);
+        }
+
+        if (sensor_file_name != null) {
+            MediaScannerConnection.scanFile(getActivity().getApplicationContext(), new String[]{getAbsoluteFileName(sensor_file_name)}, null, null);
+        }
+    }
+
+    @Override
+    public void onActivityCreated(Bundle savedInstanceState) {
+        super.onActivityCreated(savedInstanceState);
+
+    }
+
+    @Override
+    public void onResume() {
+        super.onResume();
+        // textViewDistance.setText(String.format(Locale.US, "TYPE_GPS: %s",MainActivity.log[MainActivity.TYPE_GPS]) );
+        if (MainActivity.log[MainActivity.TYPE_GPS]) {
+            location(true);
+        }
     }
 
     @Override

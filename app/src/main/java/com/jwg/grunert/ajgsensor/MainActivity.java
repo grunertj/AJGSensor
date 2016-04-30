@@ -2,6 +2,7 @@ package com.jwg.grunert.ajgsensor;
 
 import android.content.Context;
 import android.hardware.Sensor;
+import android.hardware.SensorManager;
 import android.provider.Settings;
 import android.support.design.widget.TabLayout;
 import android.support.design.widget.TabLayout;
@@ -34,8 +35,10 @@ public class MainActivity extends AppCompatActivity {
     static final int APPEND = 2;
     static final int NEW = 3;
 
+    static int SENSOR_DELAY = SensorManager.SENSOR_DELAY_NORMAL;
+
     static boolean COMPRESS = true;
-    static boolean DELAYED = true;
+    static boolean FILTERED = false;
 
     static boolean dim_state = true;
 

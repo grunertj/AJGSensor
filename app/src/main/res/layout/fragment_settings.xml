@@ -14,8 +14,7 @@
         android:layout_marginLeft="@dimen/activity_horizontal_margin"
         android:layout_below="@+id/textView"
         android:layout_alignParentLeft="true"
-        android:layout_alignParentStart="true"
-        >
+        android:layout_alignParentStart="true">
 
         <RadioButton
             android:layout_width="wrap_content"
@@ -24,7 +23,6 @@
             android:id="@+id/radioButtonOverride"
             android:layout_gravity="left"
             android:checked="false" />
-
         <RadioButton
             android:layout_width="wrap_content"
             android:layout_height="wrap_content"
@@ -32,7 +30,40 @@
             android:id="@+id/radioButtonNew"
             android:layout_gravity="left"
             android:checked="false" />
+    </RadioGroup>
 
+    <RadioGroup
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:checkedButton="@+id/radioButtonFastest"
+        android:id="@+id/radioGroup2"
+        android:orientation="horizontal"
+        android:layout_marginTop="18dp"
+        android:layout_gravity="center_horizontal"
+        android:layout_centerHorizontal="true"
+        android:layout_below="@+id/radioGroup">
+
+        <RadioButton
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:text="Default"
+            android:id="@+id/radioButtonDefault"
+            android:layout_gravity="left"
+            android:checked="false" />
+        <RadioButton
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:text="Game"
+            android:id="@+id/radioButtonGame"
+            android:layout_gravity="left"
+            android:checked="false" />
+        <RadioButton
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:text="Fastest"
+            android:id="@+id/radioButtonFastest"
+            android:layout_gravity="left"
+            android:checked="false" />
     </RadioGroup>
 
     <LinearLayout
@@ -62,7 +93,7 @@
         android:textAppearance="?android:attr/textAppearanceLarge"
         android:text="Enable/Disable Sensors"
         android:id="@+id/textView2"
-        android:layout_below="@+id/radioGroup"
+        android:layout_below="@+id/radioGroup2"
         android:layout_centerHorizontal="true"
         android:layout_marginTop="@dimen/activity_vertical_margin" />
 
@@ -72,19 +103,19 @@
         android:text="Compress"
         android:id="@+id/checkBoxCompress"
         android:checked="false"
-        android:layout_above="@+id/textView2"
+        android:layout_alignTop="@+id/radioGroup"
         android:layout_alignRight="@+id/textView"
         android:layout_alignEnd="@+id/textView" />
 
     <CheckBox
         android:layout_width="wrap_content"
         android:layout_height="wrap_content"
-        android:text="Delayed"
+        android:text="GPS Filtered"
         android:id="@+id/checkBoxDelayed"
         android:checked="false"
-        android:layout_above="@+id/textView2"
-        android:layout_toRightOf="@+id/checkBoxCompress"
-        android:layout_toEndOf="@+id/checkBoxCompress" />
+        android:layout_alignTop="@+id/checkBoxCompress"
+        android:layout_toRightOf="@+id/textView"
+        android:layout_toEndOf="@+id/textView" />
 
 
 
