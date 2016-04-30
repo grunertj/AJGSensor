@@ -155,6 +155,16 @@ public class MainActivity extends AppCompatActivity {
         }
     }
 
+    @Override
+    protected void onResume() {
+        super.onResume();
+        try {
+            curBrightnessValue = android.provider.Settings.System.getInt(getContentResolver(),Settings.System.SCREEN_BRIGHTNESS);
+        } catch (Settings.SettingNotFoundException e) {
+            e.printStackTrace();
+        }
+    }
+
     static public boolean dim_screen (boolean on, Context context) {
         if (on == true) {
             try {
