@@ -430,26 +430,28 @@ public class MainFragment extends Fragment implements SensorEventListener, Locat
     // http://stackoverflow.com/questions/6993322/how-do-i-get-the-hdop-or-vdop-values-from-the-gps-locationmanager
     @Override
     public void onLocationChanged(Location location) {
-        String time_string,trkpt_start,trkpt_end,speed=null,hdop=null,provider_name=null;
+        String location_time_string,time_string,trkpt_start,trkpt_end,speed=null,hdop=null,provider_name=null;
         String hasSpeed_name=null, hasAccuracy_name=null, hasBearing_name=null, Accuracy_name=null;
+        String locationTimeString, systemTimeString;
 
-        long timestamp;
+        long system_timestamp,location_timestamp;
         boolean valid_data = false;
 
         // time from from last location fix :
-        // timestamp = location.getTime();
+        location_timestamp = location.getTime();
 
         // current time:
-        timestamp = System.currentTimeMillis();
-
-        gpx_simpleDateFormat.format(timestamp);
+        system_timestamp = System.currentTimeMillis();
 
         textViewLatitude.setText(String.format(Locale.US, "%.8f", location.getLatitude()));
         textViewLongitude.setText(String.format(Locale.US, "%.8f", location.getLongitude()));
         textViewLocation.setText(location.getProvider());
 
         trkpt_start = String.format(Locale.US,"     <trkpt lat=\"%.6f\" lon=\"%.6f\">\n", location.getLatitude(), location.getLongitude());
-        time_string = String.format(Locale.US,"        <time>%s</time>\n",gpx_simpleDateFormat.format(System.currentTimeMillis()));
+        time_string = String.format(Locale.US,"        <time>%s</time>\n",gpx_simpleDateFormat.format(system_timestamp));
+        location_time_string = String.format(Locale.US,"        <cmt>LocationTime %s</cmt>\n",gpx_simpleDateFormat.format(location_timestamp));
+        systemTimeString = String.format(Locale.US,"        <cmt>SystemTimeMS %d</cmt>\n",system_timestamp);
+        locationTimeString = String.format(Locale.US,"        <cmt>LocationTimeMS %d</cmt>\n",location_timestamp);
         trkpt_end = String.format("     </trkpt>\n");
 
         if (location.hasAccuracy()) {
@@ -496,7 +498,7 @@ public class MainFragment extends Fragment implements SensorEventListener, Locat
             }
 
             if (location.hasAccuracy()) {
-                Accuracy_name = String.format(Locale.US,"       <cmt>hasAccuracy %.6f</cmt>\n",location.getAccuracy());
+                Accuracy_name = String.format(Locale.US,"       <cmt>Accuracy %.6f</cmt>\n",location.getAccuracy());
             }
 
             textViewDistance.setText(String.format(Locale.US,"Distance: %.2f km",TotalDistance / 1000.0f));
@@ -518,6 +520,9 @@ public class MainFragment extends Fragment implements SensorEventListener, Locat
             try {
                 gps_file.append(trkpt_start);
                 gps_file.append(time_string);
+                if (location_time_string != null) { gps_file.append(location_time_string); }
+                if (systemTimeString != null) { gps_file.append(systemTimeString); }
+                if (locationTimeString != null) { gps_file.append(locationTimeString); }
                 if (hdop != null) { gps_file.append(hdop); }
                 if (speed != null) { gps_file.append(speed); }
                 if (provider_name != null) { gps_file.append(provider_name); }
